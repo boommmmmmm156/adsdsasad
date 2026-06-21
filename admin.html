@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Добавить — Knifex</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' fill='%230d0d0d'/><text x='16' y='22' text-anchor='middle' fill='white' font-size='14' font-family='system-ui'>K</text></svg>" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="nick-modal" id="nick-modal" hidden>
+    <div class="nick-modal-box">
+      <p class="nick-modal-title">Введи ник</p>
+      <p class="nick-modal-desc">Сохранится в браузере, нужен чтобы отмечать исправленное</p>
+      <form id="nick-form">
+        <input type="text" id="nick-input" placeholder="твой ник" maxlength="32" autocomplete="off" />
+        <button type="submit" class="btn btn-primary btn-full">Продолжить</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="container">
+    <header>
+      <a href="/" class="btn">← Назад</a>
+      <button class="user-badge" id="user-badge" hidden title="Сменить ник"></button>
+    </header>
+
+    <h2 class="page-title">Новая уязвимость</h2>
+
+    <div class="form-card">
+      <form id="add-form">
+        <input type="hidden" id="project" value="knifex" />
+
+        <div class="form-group">
+          <label for="title">Название уязвимости *</label>
+          <input type="text" id="title" required placeholder="Например: SQL Injection в /api/login" />
+        </div>
+
+        <div class="form-group">
+          <label for="description">Описание</label>
+          <textarea id="description" placeholder="Подробности..."></textarea>
+        </div>
+
+        <div class="form-group">
+          <label for="severity">Критичность</label>
+          <select id="severity">
+            <option value="critical">Critical</option>
+            <option value="high">High</option>
+            <option value="medium" selected>Medium</option>
+            <option value="low">Low</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="reporter">Кто нашёл</label>
+          <input type="text" id="reporter" value="WPC" placeholder="WPC / имя аудитора" />
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary" id="submit-btn">Добавить уязвимость</button>
+          <a href="/" class="btn btn-ghost">Отмена</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { addVulnerability } from "./js/api.js";
+    import { ensureNickname, setupUserBadge } from "./js/nick.js";
+
+    ensureNickname().then(() => setupUserBadge());
+
+    function showToast(message, type = "success") {
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 3000);
+    }
+
+    document.getElementById("add-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById("submit-btn");
+      btn.disabled = true;
+      btn.textContent = "Добавляем...";
+
+      try {
+        await addVulnerability({
+          projectId: "knifex",
+          title: document.getElementById("title").value,
+          description: document.getElementById("description").value,
+          severity: document.getElementById("severity").value,
+          reporter: document.getElementById("reporter").value,
+        });
+
+        showToast("Уязвимость добавлена!");
+        setTimeout(() => (window.location.href = "/"), 800);
+      } catch (err) {
+        showToast(err.message, "error");
+        btn.disabled = false;
+        btn.textContent = "Добавить уязвимость";
+      }
+    });
+  </script>
+</body>
+</html>
